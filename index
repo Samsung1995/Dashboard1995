@@ -1,787 +1,661 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samsung Canada — Google Ads Performance</title>
+    <title>Samsung Canada | Google Ads Executive Dashboard</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <style>
-        * { color: #FFFFFF; }
-        body { background-color: #070A12; color: #FFFFFF; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .tableau-card { background: linear-gradient(145deg, #111726 0%, #0D121F 100%); border: 1px solid #26334D; border-radius: 0.6rem; padding: 1.25rem; box-shadow: 0 8px 20px rgba(0,0,0,0.45); }
-        .kpi-card { background: linear-gradient(160deg, #161F33 0%, #0F1626 100%); border: 1px solid #2E3E5C; border-top: 3px solid #3B82F6; border-radius: 0.5rem; padding: 1rem; }
-        .prov-card { background: linear-gradient(160deg, #131B2E 0%, #0C1220 100%); border: 1px solid #283754; border-radius: 0.5rem; padding: 1rem; transition: transform 0.15s ease, border-color 0.15s ease; }
-        .prov-card:hover { transform: translateY(-2px); border-color: #60A5FA; }
-        .tab-btn { color: #FFFFFF; opacity: 0.7; font-weight: 700; font-size: 0.95rem; padding-bottom: 0.65rem; border-bottom: 3px solid transparent; transition: all 0.2s; }
-        .tab-btn:hover { opacity: 1; }
-        .tab-btn.active { opacity: 1; border-bottom: 3px solid #3B82F6; color: #FFFFFF; }
-        select, input[type="date"] { background-color: #162035 !important; border: 1px solid #36496E !important; color: #FFFFFF !important; color-scheme: dark; }
-        
-        .table-scroll-container { max-height: 500px; overflow-y: auto; border: 1px solid #1E293B; border-radius: 0.5rem; }
-        table { border-collapse: separate; border-spacing: 0; width: 100%; }
-        table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            background-color: #162035;
-            color: #FFFFFF !important;
-            font-weight: 700;
-            border-bottom: 2px solid #334466;
-            cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
-        }
-        table thead th:hover { background-color: #1E2D4A; }
-        table tbody td { color: #FFFFFF !important; border-bottom: 1px solid #1E293B; white-space: nowrap; }
-        
-        .col-left { text-align: left !important; }
-        .col-right { text-align: right !important; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; font-variant-numeric: tabular-nums !important; }
-
-        .preset-btn { background-color: #17223B; border: 1px solid #334770; color: #FFFFFF; padding: 0.35rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; font-weight: 700; }
-        .preset-btn:hover { background-color: #2563EB; border-color: #60A5FA; }
+        body { background-color: #0F172A; color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; }
+        .tab-btn.active { border-bottom: 2px solid #3B82F6; color: #3B82F6; font-weight: 700; }
+        .prov-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 12px; }
+        th, td { white-space: nowrap; }
     </style>
 </head>
-<body class="p-4 md:p-6 max-w-[1600px] mx-auto">
+<body class="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
-    <!-- TOP HEADER -->
-    <div class="tableau-card mb-6">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-                <div class="flex items-center gap-2.5">
-                    <span class="bg-blue-600 text-white text-xs font-extrabold px-2.5 py-1 rounded uppercase tracking-wider">Samsung Canada</span>
-                    <h1 class="text-2xl font-extrabold tracking-tight text-white">Google Ads Performance Dashboard</h1>
-                </div>
-                <p class="text-xs text-white opacity-90 mt-1" id="active-filter-summary">Loading Google Ads data...</p>
+    <!-- Header & Navigation -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-700/60 pb-5">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded tracking-wide uppercase">Live Dashboard</span>
+                <span class="text-xs text-slate-400">YTD 2026</span>
             </div>
+            <h1 class="text-2xl md:text-3xl font-black text-white mt-1">Google Ads Multi-Division Performance</h1>
+        </div>
+        
+        <!-- Controls: Division & Date Presets -->
+        <div class="flex flex-wrap items-center gap-3">
+            <select id="division-select" class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                <option value="All">All Divisions</option>
+            </select>
+            <div class="flex items-center gap-1 bg-slate-800 border border-slate-600 rounded-lg p-1">
+                <button onclick="applyDatePreset('YTD')" class="px-2.5 py-1 text-xs font-semibold rounded hover:bg-slate-700 text-slate-200">YTD</button>
+                <button onclick="applyDatePreset('30D')" class="px-2.5 py-1 text-xs font-semibold rounded hover:bg-slate-700 text-slate-200">30D</button>
+                <button onclick="applyDatePreset('7D')" class="px-2.5 py-1 text-xs font-semibold rounded hover:bg-slate-700 text-slate-200">7D</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="date" id="start-date" class="bg-slate-800 border border-slate-600 text-white text-xs rounded px-2 py-1.5 outline-none">
+                <span class="text-slate-400 text-xs">to</span>
+                <input type="date" id="end-date" class="bg-slate-800 border border-slate-600 text-white text-xs rounded px-2 py-1.5 outline-none">
+            </div>
+        </div>
+    </header>
 
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-white">Division:</span>
-                    <select id="division-select" class="text-xs font-bold rounded px-2.5 py-1.5">
-                        <option value="All">All Divisions</option>
-                    </select>
-                </div>
+    <div id="active-filter-summary" class="text-xs text-slate-400 font-medium tracking-wide"></div>
 
-                <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-white">From:</span>
-                    <input type="date" id="start-date" class="text-xs font-bold rounded px-2 py-1" />
-                    <span class="text-xs font-bold uppercase tracking-wider text-white">To:</span>
-                    <input type="date" id="end-date" class="text-xs font-bold rounded px-2 py-1" />
-                </div>
+    <!-- 6 Executive KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="glass-panel p-4">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Total Spend</div>
+            <div id="kpi-spend" class="text-xl font-black text-white mt-1">$0.00</div>
+        </div>
+        <div class="glass-panel p-4">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Impressions</div>
+            <div id="kpi-impr" class="text-xl font-black text-white mt-1">0</div>
+        </div>
+        <div class="glass-panel p-4">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Clicks</div>
+            <div id="kpi-clicks" class="text-xl font-black text-white mt-1">0</div>
+        </div>
+        <div class="glass-panel p-4">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Avg CTR</div>
+            <div id="kpi-ctr" class="text-xl font-black text-white mt-1">0.00%</div>
+        </div>
+        <div class="glass-panel p-4">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Avg CPC</div>
+            <div id="kpi-cpc" class="text-xl font-black text-white mt-1">$0.00</div>
+        </div>
+        <div class="glass-panel p-4">
+            <div class="text-[11px] font-semibold uppercase text-slate-400">Conversions</div>
+            <div id="kpi-conv" class="text-xl font-black text-emerald-400 mt-1">0</div>
+        </div>
+    </div>
 
-                <div class="flex items-center gap-1.5">
-                    <button onclick="applyDatePreset('YTD')" class="preset-btn">YTD</button>
-                    <button onclick="applyDatePreset('30D')" class="preset-btn">Last 30D</button>
-                    <button onclick="applyDatePreset('7D')" class="preset-btn">Last 7D</button>
+    <!-- Navigation Tabs -->
+    <div class="flex gap-6 border-b border-slate-700/60 text-sm font-semibold">
+        <button onclick="switchTab('exec')" id="tab-btn-exec" class="tab-btn pb-3 active">Executive Overview</button>
+        <button onclick="switchTab('geo')" id="tab-btn-geo" class="tab-btn pb-3 text-slate-400 hover:text-white">Geographic (Canada)</button>
+        <button onclick="switchTab('demo')" id="tab-btn-demo" class="tab-btn pb-3 text-slate-400 hover:text-white">Demographics</button>
+        <button onclick="switchTab('device')" id="tab-btn-device" class="tab-btn pb-3 text-slate-400 hover:text-white">Device Breakdown</button>
+    </div>
+
+    <!-- Tab 1: Executive Overview -->
+    <div id="tab-exec" class="space-y-6">
+        <div class="glass-panel p-4">
+            <div class="flex flex-col md:flex-row justify-between md:items-center gap-3 mb-4">
+                <h3 id="exec-chart-heading" class="text-base font-bold text-white">Daily Performance Trends</h3>
+                <div class="flex gap-2">
+                    <select id="exec-m1" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="cost"></select>
+                    <select id="exec-m2" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="conversions"></select>
                 </div>
+            </div>
+            <div id="chart-trend" style="height: 380px;"></div>
+        </div>
+
+        <div class="glass-panel p-4">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-base font-bold text-white">Campaign Performance</h3>
+                <span id="campaign-count-badge" class="bg-slate-800 text-xs px-2.5 py-0.5 rounded-full text-slate-300 border border-slate-600">0 Campaigns</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="table-campaigns" class="w-full text-left border-collapse text-xs"></table>
             </div>
         </div>
     </div>
 
-    <!-- 6 KPI SCORECARDS -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <div class="kpi-card"><div class="text-[11px] font-bold uppercase tracking-wider text-white">Total Spend</div><div id="kpi-spend" class="text-xl font-extrabold mt-1 text-white">$0.00</div></div>
-        <div class="kpi-card" style="border-top-color:#06B6D4;"><div class="text-[11px] font-bold uppercase tracking-wider text-white">Impressions</div><div id="kpi-impr" class="text-xl font-extrabold mt-1 text-white">0</div></div>
-        <div class="kpi-card" style="border-top-color:#3B82F6;"><div class="text-[11px] font-bold uppercase tracking-wider text-white">Total Clicks</div><div id="kpi-clicks" class="text-xl font-extrabold mt-1 text-white">0</div></div>
-        <div class="kpi-card" style="border-top-color:#14B8A6;"><div class="text-[11px] font-bold uppercase tracking-wider text-white">Avg CTR %</div><div id="kpi-ctr" class="text-xl font-extrabold mt-1 text-white">0.00%</div></div>
-        <div class="kpi-card" style="border-top-color:#8B5CF6;"><div class="text-[11px] font-bold uppercase tracking-wider text-white">Avg CPC</div><div id="kpi-cpc" class="text-xl font-extrabold mt-1 text-white">$0.00</div></div>
-        <div class="kpi-card" style="border-top-color:#10B981;"><div class="text-[11px] font-bold uppercase tracking-wider text-white">Conversions</div><div id="kpi-conv" class="text-xl font-extrabold mt-1 text-white">0.0</div></div>
-    </div>
-
-    <!-- TABS -->
-    <div class="flex space-x-8 border-b border-slate-700 mb-6">
-        <button onclick="switchTab('executive')" id="tab-executive" class="tab-btn active">Executive</button>
-        <button onclick="switchTab('geo')" id="tab-geo" class="tab-btn">Geo</button>
-        <button onclick="switchTab('demo')" id="tab-demo" class="tab-btn">Demo</button>
-        <button onclick="switchTab('device')" id="tab-device" class="tab-btn">Device</button>
-    </div>
-
-    <!-- TAB 1: EXECUTIVE -->
-    <div id="view-executive" class="space-y-6">
-        <div class="tableau-card">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 pb-3 border-b border-slate-800">
-                <h2 class="text-base font-extrabold text-white" id="exec-chart-heading">Daily Performance Trend</h2>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-3 h-3 rounded-sm bg-blue-500"></span>
-                        <label class="text-xs font-bold uppercase tracking-wider text-white">Bar Metric:</label>
-                        <select id="exec-m1" class="text-xs font-bold rounded px-2.5 py-1.5 metric-select" data-default="cost" onchange="refreshUI()"></select>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-3 h-3 rounded-full bg-emerald-400"></span>
-                        <label class="text-xs font-bold uppercase tracking-wider text-white">Line Metric:</label>
-                        <select id="exec-m2" class="text-xs font-bold rounded px-2.5 py-1.5 metric-select" data-default="conversions" onchange="refreshUI()"></select>
-                    </div>
+    <!-- Tab 2: Geographic View -->
+    <div id="tab-geo" class="space-y-6 hidden">
+        <div class="glass-panel p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="geo-chart-heading" class="text-base font-bold text-white">Canadian Provincial Breakdown</h3>
+                <div class="flex gap-2">
+                    <select id="geo-m1" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="cost"></select>
+                    <select id="geo-m2" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="conversions"></select>
                 </div>
             </div>
-            <div id="chart-trend" style="height:400px;"></div>
+            <div id="chart-geo" style="height: 380px;"></div>
         </div>
-
-        <div class="tableau-card">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
-                <div>
-                    <h3 class="text-base font-extrabold text-white">Campaign Performance by Division</h3>
-                    <p class="text-xs text-white opacity-80">Click any column header to sort. Headers remain pinned while scrolling.</p>
-                </div>
-                <span class="text-xs font-bold bg-slate-800 px-3 py-1 rounded text-white" id="campaign-count-badge">0 Campaigns</span>
-            </div>
-            <div class="table-scroll-container">
-                <table class="text-left text-xs" id="table-campaigns"></table>
-            </div>
+        <div id="province-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+        <div class="glass-panel p-4 overflow-x-auto">
+            <table id="table-geo" class="w-full text-left border-collapse text-xs"></table>
         </div>
     </div>
 
-    <!-- TAB 2: GEO -->
-    <div id="view-geo" class="hidden space-y-6">
-        <div class="tableau-card">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 pb-3 border-b border-slate-800">
-                <div>
-                    <h2 class="text-base font-extrabold text-white" id="geo-chart-heading">Canadian Provincial Performance</h2>
-                    <p class="text-xs text-white opacity-80">Toggle Bar and Line metrics across Canadian provinces</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-3 h-3 rounded-sm bg-blue-500"></span>
-                        <label class="text-xs font-bold uppercase tracking-wider text-white">Bar Metric:</label>
-                        <select id="geo-m1" class="text-xs font-bold rounded px-2.5 py-1.5 metric-select" data-default="cost" onchange="refreshUI()"></select>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-3 h-3 rounded-full bg-emerald-400"></span>
-                        <label class="text-xs font-bold uppercase tracking-wider text-white">Line Metric:</label>
-                        <select id="geo-m2" class="text-xs font-bold rounded px-2.5 py-1.5 metric-select" data-default="conversions" onchange="refreshUI()"></select>
-                    </div>
-                </div>
-            </div>
-            <div id="chart-geo" style="height:420px;"></div>
-        </div>
-
-        <div class="tableau-card">
-            <div class="mb-4">
-                <h3 class="text-base font-extrabold text-white">Canadian Provincial Performance Cards</h3>
-                <p class="text-xs text-white opacity-80">Each card displays the province's core Google Ads metrics and Conversion Contribution Share (%)</p>
-            </div>
-            <div id="province-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </div>
-
-        <div class="tableau-card">
-            <div class="mb-3">
-                <h3 class="text-base font-extrabold text-white">Complete Canadian Provincial Performance Table</h3>
-                <p class="text-xs text-white opacity-80">Click any column header to sort provinces.</p>
-            </div>
-            <table class="w-full text-left text-xs" id="table-geo"></table>
-        </div>
-    </div>
-
-    <!-- TAB 3: DEMO -->
-    <div id="view-demo" class="hidden space-y-6">
+    <!-- Tab 3: Demographics View -->
+    <div id="tab-demo" class="space-y-6 hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="tableau-card">
-                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-3 pb-3 border-b border-slate-800">
-                    <h3 class="text-base font-extrabold text-white" id="age-chart-heading">Age Bracket Performance</h3>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="flex items-center gap-1.5">
-                            <span class="inline-block w-2.5 h-2.5 rounded-sm bg-indigo-500"></span>
-                            <label class="text-[11px] font-bold uppercase text-white">Bar:</label>
-                            <select id="age-m1" class="text-xs font-bold rounded px-2 py-1 metric-select" data-default="clicks" onchange="refreshUI()"></select>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                            <label class="text-[11px] font-bold uppercase text-white">Line:</label>
-                            <select id="age-m2" class="text-xs font-bold rounded px-2 py-1 metric-select" data-default="conversions" onchange="refreshUI()"></select>
-                        </div>
+            <div class="glass-panel p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 id="age-chart-heading" class="text-base font-bold text-white">Age Breakdown</h3>
+                    <div class="flex gap-2">
+                        <select id="age-m1" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="clicks"></select>
+                        <select id="age-m2" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="conversions"></select>
                     </div>
                 </div>
-                <div id="chart-age" style="height:360px;"></div>
+                <div id="chart-age" style="height: 300px;"></div>
+                <div class="overflow-x-auto"><table id="table-age" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
-
-            <div class="tableau-card">
-                <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 mb-3 pb-3 border-b border-slate-800">
-                    <h3 class="text-base font-extrabold text-white" id="gender-chart-heading">Gender Performance</h3>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="flex items-center gap-1.5">
-                            <span class="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500"></span>
-                            <label class="text-[11px] font-bold uppercase text-white">Bar:</label>
-                            <select id="gender-m1" class="text-xs font-bold rounded px-2 py-1 metric-select" data-default="clicks" onchange="refreshUI()"></select>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                            <label class="text-[11px] font-bold uppercase text-white">Line:</label>
-                            <select id="gender-m2" class="text-xs font-bold rounded px-2 py-1 metric-select" data-default="conversions" onchange="refreshUI()"></select>
-                        </div>
+            <div class="glass-panel p-4 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 id="gender-chart-heading" class="text-base font-bold text-white">Gender Breakdown</h3>
+                    <div class="flex gap-2">
+                        <select id="gender-m1" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="clicks"></select>
+                        <select id="gender-m2" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="conversions"></select>
                     </div>
                 </div>
-                <div id="chart-gender" style="height:360px;"></div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="tableau-card">
-                <h3 class="text-base font-extrabold mb-3 text-white">Age Bracket Performance Table</h3>
-                <table class="w-full text-left text-xs" id="table-age"></table>
-            </div>
-            <div class="tableau-card">
-                <h3 class="text-base font-extrabold mb-3 text-white">Gender Performance Table</h3>
-                <table class="w-full text-left text-xs" id="table-gender"></table>
+                <div id="chart-gender" style="height: 300px;"></div>
+                <div class="overflow-x-auto"><table id="table-gender" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
         </div>
     </div>
 
-    <!-- TAB 4: DEVICE -->
-    <div id="view-device" class="hidden space-y-6">
-        <div class="tableau-card">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-3 pb-3 border-b border-slate-800">
-                <div>
-                    <h3 class="text-base font-extrabold text-white" id="dev-chart-heading">Device Breakdown</h3>
-                    <p class="text-xs text-white opacity-80">Performance across Mobile, Desktop, Tablet & Connected TV</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-3 h-3 rounded-sm bg-teal-500"></span>
-                        <label class="text-xs font-bold uppercase tracking-wider text-white">Bar Metric:</label>
-                        <select id="dev-m1" class="text-xs font-bold rounded px-2.5 py-1.5 metric-select" data-default="clicks" onchange="refreshUI()"></select>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block w-3 h-3 rounded-full bg-pink-500"></span>
-                        <label class="text-xs font-bold uppercase tracking-wider text-white">Line Metric:</label>
-                        <select id="dev-m2" class="text-xs font-bold rounded px-2.5 py-1.5 metric-select" data-default="conversions" onchange="refreshUI()"></select>
-                    </div>
+    <!-- Tab 4: Device Breakdown -->
+    <div id="tab-device" class="space-y-6 hidden">
+        <div class="glass-panel p-4 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 id="dev-chart-heading" class="text-base font-bold text-white">Device Category</h3>
+                <div class="flex gap-2">
+                    <select id="dev-m1" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="clicks"></select>
+                    <select id="dev-m2" class="metric-select bg-slate-800 text-xs text-white border border-slate-600 rounded px-2 py-1 outline-none" data-default="conversions"></select>
                 </div>
             </div>
-            <div id="chart-device" style="height:400px;"></div>
-        </div>
-
-        <div class="tableau-card">
-            <h3 class="text-base font-extrabold mb-3 text-white">Device Performance Table</h3>
-            <table class="w-full text-left text-xs" id="table-device"></table>
+            <div id="chart-device" style="height: 340px;"></div>
+            <div class="overflow-x-auto"><table id="table-device" class="w-full text-left border-collapse text-xs"></table></div>
         </div>
     </div>
 
-<script>
-
-const CANADIAN_PROVINCES_MAP = {
-    "21144": "Ontario",
-    "21146": "Quebec",
-    "21141": "British Columbia",
-    "21140": "Alberta",
-    "21142": "Manitoba",
-    "21143": "New Brunswick",
-    "21148": "Saskatchewan",
-    "21147": "Nova Scotia",
-    "21145": "Prince Edward Island",
-    "21149": "Newfoundland and Labrador",
-    "21150": "Yukon",
-    "21151": "Northwest Territories",
-    "21152": "Nunavut"
-};
-
-function normalizeProvince(raw) {
-    if (!raw) return "National / Unspecified";
-    const s = String(raw).trim();
-    if (s.includes("21144") || s.includes("20121") || s.toLowerCase() === "ontario") return "Ontario";
-    if (Object.values(CANADIAN_PROVINCES_MAP).includes(s)) return s;
-    const m = s.match(/\b(211[4-5][0-9]|2011[3-9]|2012[0-5])\b/) || s.match(/\d+/);
-    if (m && CANADIAN_PROVINCES_MAP[m[0]]) return CANADIAN_PROVINCES_MAP[m[0]];
-    return "National / Unspecified";
-}
-
-const METRIC_META = {
-    cost:        { label: "Spend ($)",      fmt: v => "$" + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) },
-    clicks:      { label: "Clicks",         fmt: v => Math.round(v).toLocaleString('en-US') },
-    impressions: { label: "Impressions",    fmt: v => Math.round(v).toLocaleString('en-US') },
-    conversions: { label: "Conversions",    fmt: v => v.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1}) },
-    cpc:         { label: "Avg CPC ($)",    fmt: v => "$" + v.toFixed(2) },
-    ctr:         { label: "CTR (%)",        fmt: v => v.toFixed(2) + "%" },
-    cpa:         { label: "CPA ($ / Conv)", fmt: v => "$" + v.toFixed(2) }
-};
-
-document.querySelectorAll('.metric-select').forEach(sel => {
-    const def = sel.getAttribute('data-default');
-    sel.innerHTML = '';
-    Object.entries(METRIC_META).forEach(([k, meta]) => {
-        const opt = document.createElement('option');
-        opt.value = k;
-        opt.innerText = meta.label;
-        if (k === def) opt.selected = true;
-        sel.appendChild(opt);
-    });
-});
-
-let campSortCol = 'cost';
-let campSortAsc = false;
-let currentCampaignRows = [];
-
-let geoSortCol = 'cost';
-let geoSortAsc = false;
-let currentGeoRows = [];
-
-function computeDerived(row) {
-    const impr = num(row.impressions);
-    const clk = num(row.clicks);
-    const cost = num(row.cost);
-    const conv = num(row.conversions);
-    return {
-        impressions: impr,
-        clicks: clk,
-        cost: cost,
-        conversions: conv,
-        cpc: clk > 0 ? (cost / clk) : 0,
-        ctr: impr > 0 ? (clk / impr * 100) : 0,
-        cpa: conv > 0 ? (cost / conv) : 0
+    <!-- Embedded Clean JSON Payload -->
+    <script>
+    const RAW_CSVS = {
+        "campaign": [
+            {"date": "2026-11-01", "division": "MX", "impressions": 10000, "clicks": 500, "cost": 200.0, "conversions": 15.5},
+            {"date": "2026-11-02", "division": "HE", "impressions": 5000, "clicks": 250, "cost": 150.0, "conversions": 10.0}
+        ],
+        "campaign_details": [
+            {"date": "2026-11-01", "division": "MX", "campaign_name": "MX-S26-Search", "impressions": 10000, "clicks": 500, "cost": 200.0, "conversions": 15.5},
+            {"date": "2026-11-02", "division": "HE", "campaign_name": "HE-OLED-Shopping", "impressions": 5000, "clicks": 250, "cost": 150.0, "conversions": 10.0}
+        ],
+        "demo": [
+            {"date": "2026-11-01", "division": "MX", "demographic_type": "Age", "value": "25-34", "impressions": 1000, "clicks": 50, "cost": 20.0, "conversions": 1.5},
+            {"date": "2026-11-01", "division": "MX", "demographic_type": "Gender", "value": "Male", "impressions": 2000, "clicks": 100, "cost": 40.0, "conversions": 3.0}
+        ],
+        "geo": [
+            {"date": "2026-11-01", "division": "MX", "province": "Ontario", "impressions": 1000, "clicks": 50, "cost": 20.0, "conversions": 1.5}
+        ],
+        "device": [
+            {"date": "2026-11-01", "division": "MX", "device_type": "Mobile", "impressions": 1000, "clicks": 50, "cost": 20.0, "conversions": 1.5}
+        ]
     };
-}
 
-function switchTab(tab) {
-    ['executive', 'geo', 'demo', 'device'].forEach(t => {
-        document.getElementById('view-' + t).classList.toggle('hidden', t !== tab);
-        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-    });
-    window.dispatchEvent(new Event('resize'));
-}
-
-function num(v) {
-    const n = parseFloat(v);
-    return isNaN(n) ? 0 : n;
-}
-
-function getCleanLayout(y1Title, y2Title = null, bottomMargin = 60, tickAngle = 0) {
-    const layout = {
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#FFFFFF', family: 'Inter, sans-serif' },
-        margin: { t: 42, l: 65, r: y2Title ? 65 : 25, b: bottomMargin },
-        legend: {
-            orientation: 'h',
-            y: 1.12,
-            x: 0,
-            font: { color: '#FFFFFF', size: 12 }
-        },
-        xaxis: {
-            gridcolor: '#1E293B',
-            tickfont: { color: '#FFFFFF', size: 11 },
-            tickangle: tickAngle,
-            automargin: true
-        },
-        yaxis: {
-            title: { text: y1Title, font: { color: '#FFFFFF', size: 12 } },
-            gridcolor: '#1E293B',
-            tickfont: { color: '#FFFFFF', size: 11 },
-            automargin: true
-        }
+    const METRIC_META = {
+        cost:        { label: "Spend ($)",      fmt: v => "$" + v.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) },
+        clicks:      { label: "Clicks",         fmt: v => Math.round(v).toLocaleString('en-US') },
+        impressions: { label: "Impressions",    fmt: v => Math.round(v).toLocaleString('en-US') },
+        conversions: { label: "Conversions",    fmt: v => v.toLocaleString('en-US', {minimumFractionDigits:1, maximumFractionDigits:1}) },
+        cpc:         { label: "Avg CPC ($)",    fmt: v => "$" + v.toFixed(2) },
+        ctr:         { label: "CTR (%)",        fmt: v => v.toFixed(2) + "%" },
+        cpa:         { label: "CPA ($ / Conv)", fmt: v => "$" + v.toFixed(2) }
     };
-    if (y2Title) {
-        layout.yaxis2 = {
-            title: { text: y2Title, font: { color: '#FFFFFF', size: 12 } },
-            overlaying: 'y',
-            side: 'right',
-            showgrid: false,
-            tickfont: { color: '#FFFFFF', size: 11 },
-            automargin: true
+
+    let campSortCol = 'cost';
+    let campSortAsc = false;
+    let currentCampaignRows = [];
+
+    let geoSortCol = 'cost';
+    let geoSortAsc = false;
+    let currentGeoRows = [];
+
+    function num(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+    function computeDerived(r) {
+        const cost = num(r.cost);
+        const impr = num(r.impressions);
+        const clk = num(r.clicks);
+        const conv = num(r.conversions);
+        return {
+            cost, impressions: impr, clicks: clk, conversions: conv,
+            ctr: impr > 0 ? (clk / impr) * 100 : 0,
+            cpc: clk > 0 ? (cost / clk) : 0,
+            cpa: conv > 0 ? (cost / conv) : 0
         };
     }
-    return layout;
-}
 
-// BULLETPROOF ENFORCED INLINE STYLES FOR TABLE ALIGNMENT
-function buildAlignedTable(elId, headers, rows) {
-    const tbl = document.getElementById(elId);
-    if (!rows || rows.length === 0) {
-        tbl.innerHTML = '<tr><td class="text-white py-4 px-3" style="text-align: left;">No matching records found.</td></tr>';
-        return;
-    }
-    
-    let html = '<thead><tr>';
-    headers.forEach((h, idx) => {
-        if (idx === 0) {
-            html += `<th class="py-2.5 px-3 text-xs uppercase tracking-wider text-white" style="text-align: left !important;">${h}</th>`;
-        } else {
-            html += `<th class="py-2.5 px-3 text-xs uppercase tracking-wider text-white" style="text-align: right !important;">${h}</th>`;
-        }
-    });
-    html += '</tr></thead><tbody>';
-    
-    rows.forEach(r => {
-        html += '<tr class="hover:bg-slate-800/60 transition">';
-        r.forEach((c, idx) => {
-            if (idx === 0) {
-                html += `<td class="py-2.5 px-3 text-white font-bold" style="text-align: left !important;">${c}</td>`;
-            } else {
-                html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${c}</td>`;
-            }
+    function switchTab(tabId) {
+        ['exec', 'geo', 'demo', 'device'].forEach(id => {
+            document.getElementById(`tab-${id}`).classList.toggle('hidden', id !== tabId);
+            document.getElementById(`tab-btn-${id}`).classList.toggle('active', id === tabId);
+            document.getElementById(`tab-btn-${id}`).classList.toggle('text-slate-400', id !== tabId);
         });
-        html += '</tr>';
-    });
-    html += '</tbody>';
-    tbl.innerHTML = html;
-}
-
-function renderSortableCampaignTable() {
-    const tbl = document.getElementById('table-campaigns');
-    const cols = [
-        { key: 'division',      label: 'Division',    align: 'left' },
-        { key: 'campaign_name', label: 'Campaign',    align: 'left' },
-        { key: 'cost',          label: 'Spend ($)',   align: 'right' },
-        { key: 'impressions',   label: 'Impressions', align: 'right' },
-        { key: 'clicks',        label: 'Clicks',      align: 'right' },
-        { key: 'ctr',           label: 'CTR %',       align: 'right' },
-        { key: 'cpc',           label: 'Avg CPC',     align: 'right' },
-        { key: 'conversions',   label: 'Conversions', align: 'right' },
-        { key: 'cpa',           label: 'CPA',         align: 'right' }
-    ];
-
-    document.getElementById('campaign-count-badge').innerText = `${currentCampaignRows.length} Campaigns`;
-
-    if (currentCampaignRows.length === 0) {
-        tbl.innerHTML = '<tr><td class="text-white py-4 px-3" style="text-align: left;">No campaign data found.</td></tr>';
-        return;
+        window.dispatchEvent(new Event('resize'));
     }
 
-    const sorted = [...currentCampaignRows].sort((a, b) => {
-        const valA = a[campSortCol];
-        const valB = b[campSortCol];
-        if (typeof valA === 'string') return campSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        return campSortAsc ? (valA - valB) : (valB - valA);
-    });
-
-    let html = '<thead><tr>';
-    cols.forEach(c => {
-        const arrow = (campSortCol === c.key) ? (campSortAsc ? ' ▲' : ' ▼') : '';
-        html += `<th onclick="sortCampaignTable('${c.key}')" class="py-3 px-3 text-xs uppercase tracking-wider text-white" style="text-align: ${c.align} !important;">${c.label}${arrow}</th>`;
-    });
-    html += '</tr></thead><tbody>';
-
-    sorted.forEach(r => {
-        html += '<tr class="hover:bg-slate-800/60 transition">';
-        html += `<td class="py-2.5 px-3 font-extrabold text-white" style="text-align: left !important;"><span class="bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-[11px]">${r.division}</span></td>`;
-        html += `<td class="py-2.5 px-3 font-bold text-white max-w-[340px] truncate" style="text-align: left !important;" title="${r.campaign_name}">${r.campaign_name}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cost.fmt(r.cost)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.impressions.fmt(r.impressions)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.clicks.fmt(r.clicks)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.ctr.fmt(r.ctr)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpc.fmt(r.cpc)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.conversions.fmt(r.conversions)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpa.fmt(r.cpa)}</td>`;
-        html += '</tr>';
-    });
-    html += '</tbody>';
-    tbl.innerHTML = html;
-}
-
-function sortCampaignTable(colKey) {
-    if (campSortCol === colKey) campSortAsc = !campSortAsc;
-    else { campSortCol = colKey; campSortAsc = (colKey === 'division' || colKey === 'campaign_name'); }
-    renderSortableCampaignTable();
-}
-
-function renderSortableGeoTable() {
-    const tbl = document.getElementById('table-geo');
-    const cols = [
-        { key: 'key',         label: 'Canadian Province / Territory', align: 'left' },
-        { key: 'cost',        label: 'Spend ($)',                     align: 'right' },
-        { key: 'spendShare',  label: 'Spend Share %',                 align: 'right' },
-        { key: 'conversions', label: 'Conversions',                   align: 'right' },
-        { key: 'convShare',   label: 'Conv. Share %',                 align: 'right' },
-        { key: 'cpa',         label: 'CPA',                           align: 'right' },
-        { key: 'clicks',      label: 'Clicks',                        align: 'right' },
-        { key: 'impressions', label: 'Impressions',                   align: 'right' },
-        { key: 'ctr',         label: 'CTR %',                         align: 'right' },
-        { key: 'cpc',         label: 'Avg CPC',                       align: 'right' }
-    ];
-
-    if (currentGeoRows.length === 0) {
-        tbl.innerHTML = '<tr><td class="text-white py-4 px-3" style="text-align: left;">No provincial data found.</td></tr>';
-        return;
+    function getCleanLayout(y1Title, y2Title, bMargin = 50, lAngle = 0) {
+        return {
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            font: { color: '#94A3B8', size: 11 },
+            margin: { t: 20, r: 50, b: bMargin, l: 50 },
+            xaxis: { tickangle: lAngle, gridcolor: '#1E293B', zeroline: false },
+            yaxis: { title: y1Title, gridcolor: '#1E293B', zeroline: false },
+            yaxis2: { title: y2Title, overlaying: 'y', side: 'right', zeroline: false, showgrid: false },
+            legend: { orientation: 'h', y: 1.15, x: 0 },
+            hovermode: 'x unified'
+        };
     }
 
-    const sorted = [...currentGeoRows].sort((a, b) => {
-        const valA = a[geoSortCol];
-        const valB = b[geoSortCol];
-        if (typeof valA === 'string') return geoSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-        return geoSortAsc ? (valA - valB) : (valB - valA);
-    });
-
-    let html = '<thead><tr>';
-    cols.forEach(c => {
-        const arrow = (geoSortCol === c.key) ? (geoSortAsc ? ' ▲' : ' ▼') : '';
-        html += `<th onclick="sortGeoTable('${c.key}')" class="py-3 px-3 text-xs uppercase tracking-wider text-white" style="text-align: ${c.align} !important;">${c.label}${arrow}</th>`;
-    });
-    html += '</tr></thead><tbody>';
-
-    sorted.forEach(g => {
-        html += '<tr class="hover:bg-slate-800/60 transition">';
-        html += `<td class="py-2.5 px-3 font-bold text-white" style="text-align: left !important;">${g.key}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cost.fmt(g.cost)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${g.spendShare.toFixed(1)}%</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.conversions.fmt(g.conversions)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${g.convShare.toFixed(1)}%</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpa.fmt(g.cpa)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.clicks.fmt(g.clicks)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.impressions.fmt(g.impressions)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.ctr.fmt(g.ctr)}</td>`;
-        html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpc.fmt(g.cpc)}</td>`;
-        html += '</tr>';
-    });
-    html += '</tbody>';
-    tbl.innerHTML = html;
-}
-
-function sortGeoTable(colKey) {
-    if (geoSortCol === colKey) geoSortAsc = !geoSortAsc;
-    else { geoSortCol = colKey; geoSortAsc = (colKey === 'key'); }
-    renderSortableGeoTable();
-}
-
-function groupAndAggregate(arr, keyFn, filterFn) {
-    const map = {};
-    arr.forEach(r => {
-        if (filterFn && !filterFn(r)) return;
-        const k = keyFn(r);
-        if (!k) return;
-        if (!map[k]) map[k] = { key: k, impressions: 0, clicks: 0, cost: 0, conversions: 0 };
-        map[k].impressions += num(r.impressions);
-        map[k].clicks += num(r.clicks);
-        map[k].cost += num(r.cost);
-        map[k].conversions += num(r.conversions);
-    });
-    return Object.values(map).map(item => ({ key: item.key, ...computeDerived(item) }));
-}
-
-function applyDatePreset(preset) {
-    const sInput = document.getElementById('start-date');
-    const eInput = document.getElementById('end-date');
-    const maxDateStr = eInput.max || "2026-11-25";
-    const maxDate = new Date(maxDateStr + "T00:00:00");
-
-    if (preset === 'YTD') {
-        sInput.value = "2026-01-01";
-        eInput.value = maxDateStr;
-    } else if (preset === '30D') {
-        const d = new Date(maxDate);
-        d.setDate(d.getDate() - 30);
-        sInput.value = d.toISOString().slice(0, 10);
-        eInput.value = maxDateStr;
-    } else if (preset === '7D') {
-        const d = new Date(maxDate);
-        d.setDate(d.getDate() - 7);
-        sInput.value = d.toISOString().slice(0, 10);
-        eInput.value = maxDateStr;
+    function normalizeProvince(p) {
+        return (p || "Unknown").trim();
     }
-    refreshUI();
-}
 
-function refreshUI() {
-    const div = document.getElementById('division-select').value;
-    const startD = document.getElementById('start-date').value || "2026-01-01";
-    const endD = document.getElementById('end-date').value || "2026-12-31";
+    function buildAlignedTable(elId, headers, rows) {
+        const tbl = document.getElementById(elId);
+        if (!rows || rows.length === 0) {
+            tbl.innerHTML = '<tr><td class="text-white py-4 px-3" style="text-align: left;">No matching records found.</td></tr>';
+            return;
+        }
+        let html = '<thead><tr>';
+        headers.forEach((h, idx) => {
+            html += `<th class="py-2.5 px-3 text-xs uppercase tracking-wider text-white" style="text-align: ${idx === 0 ? 'left' : 'right'} !important;">${h}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+        rows.forEach(r => {
+            html += '<tr class="hover:bg-slate-800/60 transition">';
+            r.forEach((c, idx) => {
+                if (idx === 0) {
+                    html += `<td class="py-2.5 px-3 text-white font-bold" style="text-align: left !important;">${c}</td>`;
+                } else {
+                    html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${c}</td>`;
+                }
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+        tbl.innerHTML = html;
+    }
 
-    const flt = (r) => {
-        const passDiv = (div === 'All' || !r.division || r.division === div);
-        const d = r.date ? String(r.date).slice(0, 10) : "2026-01-01";
-        const passDate = (d >= startD && d <= endD);
-        return passDiv && passDate;
-    };
+    function renderSortableCampaignTable() {
+        const tbl = document.getElementById('table-campaigns');
+        const cols = [
+            { key: 'division',      label: 'Division',    align: 'left' },
+            { key: 'campaign_name', label: 'Campaign',    align: 'left' },
+            { key: 'cost',          label: 'Spend ($)',   align: 'right' },
+            { key: 'impressions',   label: 'Impressions', align: 'right' },
+            { key: 'clicks',        label: 'Clicks',      align: 'right' },
+            { key: 'ctr',           label: 'CTR %',       align: 'right' },
+            { key: 'cpc',           label: 'Avg CPC',     align: 'right' },
+            { key: 'conversions',   label: 'Conversions', align: 'right' },
+            { key: 'cpa',           label: 'CPA',         align: 'right' }
+        ];
 
-    document.getElementById('active-filter-summary').innerText =
-        `Reporting Window: ${startD} to ${endD}   |   Division: ${div}`;
+        document.getElementById('campaign-count-badge').innerText = `${currentCampaignRows.length} Campaigns`;
+        if (currentCampaignRows.length === 0) {
+            tbl.innerHTML = '<tr><td class="text-white py-4 px-3" style="text-align: left;">No campaign data found.</td></tr>';
+            return;
+        }
 
-    // KPIs
-    const cRows = RAW_CSVS.campaign.filter(flt);
-    const totalsRaw = { impressions: 0, clicks: 0, cost: 0, conversions: 0 };
-    cRows.forEach(r => {
-        totalsRaw.impressions += num(r.impressions);
-        totalsRaw.clicks += num(r.clicks);
-        totalsRaw.cost += num(r.cost);
-        totalsRaw.conversions += num(r.conversions);
-    });
-    const kpis = computeDerived(totalsRaw);
+        const sorted = [...currentCampaignRows].sort((a, b) => {
+            const valA = a[campSortCol];
+            const valB = b[campSortCol];
+            if (typeof valA === 'string') return campSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            return campSortAsc ? (valA - valB) : (valB - valA);
+        });
 
-    document.getElementById('kpi-spend').innerText = METRIC_META.cost.fmt(kpis.cost);
-    document.getElementById('kpi-impr').innerText = METRIC_META.impressions.fmt(kpis.impressions);
-    document.getElementById('kpi-clicks').innerText = METRIC_META.clicks.fmt(kpis.clicks);
-    document.getElementById('kpi-ctr').innerText = METRIC_META.ctr.fmt(kpis.ctr);
-    document.getElementById('kpi-cpc').innerText = METRIC_META.cpc.fmt(kpis.cpc);
-    document.getElementById('kpi-conv').innerText = METRIC_META.conversions.fmt(kpis.conversions);
+        let html = '<thead><tr>';
+        cols.forEach(c => {
+            const isSorted = (campSortCol === c.key);
+            const arrow = isSorted ? (campSortAsc ? ' ▲' : ' ▼') : '';
+            html += `<th onclick="sortCampaignTable('${c.key}')" class="py-3 px-3 text-xs uppercase tracking-wider text-white cursor-pointer ${isSorted ? 'bg-slate-800 text-blue-400 font-extrabold' : ''}" style="text-align: ${c.align} !important;">${c.label}${arrow}</th>`;
+        });
+        html += '</tr></thead><tbody>';
 
-    // Executive Tab
-    const execM1 = document.getElementById('exec-m1').value;
-    const execM2 = document.getElementById('exec-m2').value;
-    document.getElementById('exec-chart-heading').innerText = `Daily ${METRIC_META[execM1].label} vs. ${METRIC_META[execM2].label}`;
+        sorted.forEach(r => {
+            html += '<tr class="hover:bg-slate-800/60 transition">';
+            html += `<td class="py-2.5 px-3 font-extrabold text-white" style="text-align: left !important;"><span class="bg-slate-800 border border-slate-600 px-2 py-0.5 rounded text-[11px]">${r.division}</span></td>`;
+            html += `<td class="py-2.5 px-3 font-bold text-white max-w-[340px] truncate" style="text-align: left !important;" title="${r.campaign_name}">${r.campaign_name}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cost.fmt(r.cost)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.impressions.fmt(r.impressions)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.clicks.fmt(r.clicks)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.ctr.fmt(r.ctr)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpc.fmt(r.cpc)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.conversions.fmt(r.conversions)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpa.fmt(r.cpa)}</td>`;
+            html += '</tr>';
+        });
+        html += '</tbody>';
+        tbl.innerHTML = html;
+    }
 
-    const trend = groupAndAggregate(RAW_CSVS.campaign, r => String(r.date).slice(0, 10), flt).sort((a,b) => a.key.localeCompare(b.key));
-    Plotly.newPlot('chart-trend', [
-        { x: trend.map(x=>x.key), y: trend.map(x=>x[execM1]), name: METRIC_META[execM1].label, type: 'bar', marker: {color: '#3B82F6', opacity: 0.85} },
-        { x: trend.map(x=>x.key), y: trend.map(x=>x[execM2]), name: METRIC_META[execM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#10B981', width: 3} }
-    ], getCleanLayout(METRIC_META[execM1].label, METRIC_META[execM2].label, 50, 0), {responsive: true});
+    function sortCampaignTable(colKey) {
+        if (campSortCol === colKey) campSortAsc = !campSortAsc;
+        else { campSortCol = colKey; campSortAsc = (colKey === 'division' || colKey === 'campaign_name'); }
+        renderSortableCampaignTable();
+    }
 
-    const sourceCampDetails = (RAW_CSVS.campaign_details && RAW_CSVS.campaign_details.length > 0) ? RAW_CSVS.campaign_details : RAW_CSVS.campaign;
-    const campMap = {};
-    sourceCampDetails.forEach(r => {
-        if (!flt(r)) return;
-        const cName = r.campaign_name || r.campaign || "All Campaigns";
-        const dName = r.division || "Other";
-        const key = `${dName}|||${cName}`;
-        if (!campMap[key]) campMap[key] = { division: dName, campaign_name: cName, impressions: 0, clicks: 0, cost: 0, conversions: 0 };
-        campMap[key].impressions += num(r.impressions);
-        campMap[key].clicks += num(r.clicks);
-        campMap[key].cost += num(r.cost);
-        campMap[key].conversions += num(r.conversions);
-    });
-    currentCampaignRows = Object.values(campMap).map(item => ({
-        division: item.division,
-        campaign_name: item.campaign_name,
-        ...computeDerived(item)
-    }));
-    renderSortableCampaignTable();
+    function renderSortableGeoTable() {
+        const tbl = document.getElementById('table-geo');
+        const cols = [
+            { key: 'key',         label: 'Canadian Province / Territory', align: 'left' },
+            { key: 'cost',        label: 'Spend ($)',                     align: 'right' },
+            { key: 'spendShare',  label: 'Spend Share %',                 align: 'right' },
+            { key: 'conversions', label: 'Conversions',                   align: 'right' },
+            { key: 'convShare',   label: 'Conv. Share %',                 align: 'right' },
+            { key: 'cpa',         label: 'CPA',                           align: 'right' },
+            { key: 'clicks',      label: 'Clicks',                        align: 'right' },
+            { key: 'impressions', label: 'Impressions',                   align: 'right' },
+            { key: 'ctr',         label: 'CTR %',                         align: 'right' },
+            { key: 'cpc',         label: 'Avg CPC',                       align: 'right' }
+        ];
 
-    // Geo Tab
-    const geoM1 = document.getElementById('geo-m1').value;
-    const geoM2 = document.getElementById('geo-m2').value;
-    document.getElementById('geo-chart-heading').innerText = `Canadian Provinces: ${METRIC_META[geoM1].label} vs. ${METRIC_META[geoM2].label}`;
+        if (currentGeoRows.length === 0) {
+            tbl.innerHTML = '<tr><td class="text-white py-4 px-3" style="text-align: left;">No provincial data found.</td></tr>';
+            return;
+        }
 
-    const geos = groupAndAggregate(RAW_CSVS.geo, r => normalizeProvince(r.province || r.province_or_region || r.region_criterion_id), flt)
-        .sort((a,b) => b[geoM1] - a[geoM1] || b.cost - a.cost);
+        const sorted = [...currentGeoRows].sort((a, b) => {
+            const valA = a[geoSortCol];
+            const valB = b[geoSortCol];
+            if (typeof valA === 'string') return geoSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            return geoSortAsc ? (valA - valB) : (valB - valA);
+        });
 
-    const totalGeoConv = geos.reduce((acc, g) => acc + g.conversions, 0);
-    const totalGeoSpend = geos.reduce((acc, g) => acc + g.cost, 0);
-    const totalGeoClicks = geos.reduce((acc, g) => acc + g.clicks, 0);
+        let html = '<thead><tr>';
+        cols.forEach(c => {
+            const isSorted = (geoSortCol === c.key);
+            const arrow = isSorted ? (geoSortAsc ? ' ▲' : ' ▼') : '';
+            html += `<th onclick="sortGeoTable('${c.key}')" class="py-3 px-3 text-xs uppercase tracking-wider text-white cursor-pointer ${isSorted ? 'bg-slate-800 text-blue-400 font-extrabold' : ''}" style="text-align: ${c.align} !important;">${c.label}${arrow}</th>`;
+        });
+        html += '</tr></thead><tbody>';
 
-    Plotly.newPlot('chart-geo', [
-        { x: geos.map(g=>g.key), y: geos.map(g=>g[geoM1]), name: METRIC_META[geoM1].label, type: 'bar', marker: {color: '#3B82F6'} },
-        { x: geos.map(g=>g.key), y: geos.map(g=>g[geoM2]), name: METRIC_META[geoM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#10B981', width: 3} }
-    ], getCleanLayout(METRIC_META[geoM1].label, METRIC_META[geoM2].label, 110, -30), {responsive: true});
+        sorted.forEach(g => {
+            html += '<tr class="hover:bg-slate-800/60 transition">';
+            html += `<td class="py-2.5 px-3 font-bold text-white" style="text-align: left !important;">${g.key}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cost.fmt(g.cost)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${g.spendShare.toFixed(1)}%</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.conversions.fmt(g.conversions)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${g.convShare.toFixed(1)}%</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpa.fmt(g.cpa)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.clicks.fmt(g.clicks)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.impressions.fmt(g.impressions)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.ctr.fmt(g.ctr)}</td>`;
+            html += `<td class="py-2.5 px-3 text-white" style="text-align: right !important; font-family: monospace !important; font-variant-numeric: tabular-nums !important;">${METRIC_META.cpc.fmt(g.cpc)}</td>`;
+            html += '</tr>';
+        });
+        html += '</tbody>';
+        tbl.innerHTML = html;
+    }
 
-    const cardsContainer = document.getElementById('province-cards-grid');
-    if (geos.length === 0) {
-        cardsContainer.innerHTML = '<div class="text-white text-sm col-span-4" style="text-align: left;">No provincial records found for this date/division filter.</div>';
-    } else {
-        cardsContainer.innerHTML = geos.map(g => {
-            const convShare = totalGeoConv > 0 ? (g.conversions / totalGeoConv * 100) : (totalGeoClicks > 0 ? (g.clicks / totalGeoClicks * 100) : 0);
+    function sortGeoTable(colKey) {
+        if (geoSortCol === colKey) geoSortAsc = !geoSortAsc;
+        else { geoSortCol = colKey; geoSortAsc = (colKey === 'key'); }
+        renderSortableGeoTable();
+    }
 
-            return `
-            <div class="prov-card flex flex-col justify-between">
-                <div>
-                    <div class="flex justify-between items-start gap-2 mb-2">
-                        <h4 class="text-sm font-extrabold text-white">${g.key}</h4>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs my-2">
-                        <div>
-                            <div class="text-[10px] uppercase text-white opacity-80">Spend</div>
-                            <div class="font-extrabold text-white">${METRIC_META.cost.fmt(g.cost)}</div>
+    function groupAndAggregate(arr, keyFn, filterFn) {
+        const map = {};
+        arr.forEach(r => {
+            if (filterFn && !filterFn(r)) return;
+            const k = keyFn(r);
+            if (!k) return;
+            if (!map[k]) map[k] = { key: k, impressions: 0, clicks: 0, cost: 0, conversions: 0 };
+            map[k].impressions += num(r.impressions);
+            map[k].clicks += num(r.clicks);
+            map[k].cost += num(r.cost);
+            map[k].conversions += num(r.conversions);
+        });
+        return Object.values(map).map(item => ({ key: item.key, ...computeDerived(item) }));
+    }
+
+    function applyDatePreset(preset) {
+        const sInput = document.getElementById('start-date');
+        const eInput = document.getElementById('end-date');
+        const maxDateStr = eInput.max || "2026-11-25";
+        const maxDate = new Date(maxDateStr + "T00:00:00");
+
+        if (preset === 'YTD') {
+            sInput.value = "2026-01-01";
+            eInput.value = maxDateStr;
+        } else if (preset === '30D') {
+            const d = new Date(maxDate);
+            d.setDate(d.getDate() - 30);
+            sInput.value = d.toISOString().slice(0, 10);
+            eInput.value = maxDateStr;
+        } else if (preset === '7D') {
+            const d = new Date(maxDate);
+            d.setDate(d.getDate() - 7);
+            sInput.value = d.toISOString().slice(0, 10);
+            eInput.value = maxDateStr;
+        }
+        refreshUI();
+    }
+
+    function refreshUI() {
+        const div = document.getElementById('division-select').value;
+        const startD = document.getElementById('start-date').value || "2026-01-01";
+        const endD = document.getElementById('end-date').value || "2026-12-31";
+
+        const flt = (r) => {
+            const passDiv = (div === 'All' || !r.division || r.division === div);
+            const d = r.date ? String(r.date).slice(0, 10) : "2026-01-01";
+            const passDate = (d >= startD && d <= endD);
+            return passDiv && passDate;
+        };
+
+        document.getElementById('active-filter-summary').innerText = `Reporting Window: ${startD} to ${endD} | Division: ${div}`;
+
+        // KPIs
+        const cRows = RAW_CSVS.campaign.filter(flt);
+        const totalsRaw = { impressions: 0, clicks: 0, cost: 0, conversions: 0 };
+        cRows.forEach(r => {
+            totalsRaw.impressions += num(r.impressions);
+            totalsRaw.clicks += num(r.clicks);
+            totalsRaw.cost += num(r.cost);
+            totalsRaw.conversions += num(r.conversions);
+        });
+        const kpis = computeDerived(totalsRaw);
+
+        document.getElementById('kpi-spend').innerText = METRIC_META.cost.fmt(kpis.cost);
+        document.getElementById('kpi-impr').innerText = METRIC_META.impressions.fmt(kpis.impressions);
+        document.getElementById('kpi-clicks').innerText = METRIC_META.clicks.fmt(kpis.clicks);
+        document.getElementById('kpi-ctr').innerText = METRIC_META.ctr.fmt(kpis.ctr);
+        document.getElementById('kpi-cpc').innerText = METRIC_META.cpc.fmt(kpis.cpc);
+        document.getElementById('kpi-conv').innerText = METRIC_META.conversions.fmt(kpis.conversions);
+
+        // Executive Tab
+        const execM1 = document.getElementById('exec-m1').value;
+        const execM2 = document.getElementById('exec-m2').value;
+        document.getElementById('exec-chart-heading').innerText = `Daily ${METRIC_META[execM1].label} vs. ${METRIC_META[execM2].label}`;
+
+        const trend = groupAndAggregate(RAW_CSVS.campaign, r => String(r.date).slice(0, 10), flt).sort((a,b) => a.key.localeCompare(b.key));
+        Plotly.newPlot('chart-trend', [
+            { x: trend.map(x=>x.key), y: trend.map(x=>x[execM1]), name: METRIC_META[execM1].label, type: 'bar', marker: {color: '#3B82F6', opacity: 0.85} },
+            { x: trend.map(x=>x.key), y: trend.map(x=>x[execM2]), name: METRIC_META[execM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#10B981', width: 3} }
+        ], getCleanLayout(METRIC_META[execM1].label, METRIC_META[execM2].label, 50, 0), {responsive: true});
+
+        const sourceCampDetails = (RAW_CSVS.campaign_details && RAW_CSVS.campaign_details.length > 0) ? RAW_CSVS.campaign_details : RAW_CSVS.campaign;
+        const campMap = {};
+        sourceCampDetails.forEach(r => {
+            if (!flt(r)) return;
+            const cName = r.campaign_name || r.campaign || "All Campaigns";
+            const dName = r.division || "Other";
+            const key = `${dName}|||${cName}`;
+            if (!campMap[key]) campMap[key] = { division: dName, campaign_name: cName, impressions: 0, clicks: 0, cost: 0, conversions: 0 };
+            campMap[key].impressions += num(r.impressions);
+            campMap[key].clicks += num(r.clicks);
+            campMap[key].cost += num(r.cost);
+            campMap[key].conversions += num(r.conversions);
+        });
+        currentCampaignRows = Object.values(campMap).map(item => ({
+            division: item.division,
+            campaign_name: item.campaign_name,
+            ...computeDerived(item)
+        }));
+        renderSortableCampaignTable();
+
+        // Geo Tab
+        const geoM1 = document.getElementById('geo-m1').value;
+        const geoM2 = document.getElementById('geo-m2').value;
+        document.getElementById('geo-chart-heading').innerText = `Canadian Provinces: ${METRIC_META[geoM1].label} vs. ${METRIC_META[geoM2].label}`;
+
+        const geos = groupAndAggregate(RAW_CSVS.geo, r => normalizeProvince(r.province || r.province_or_region || r.region_criterion_id), flt)
+            .sort((a,b) => b[geoM1] - a[geoM1] || b.cost - a.cost);
+
+        const totalGeoConv = geos.reduce((acc, g) => acc + g.conversions, 0);
+        const totalGeoSpend = geos.reduce((acc, g) => acc + g.cost, 0);
+        const totalGeoClicks = geos.reduce((acc, g) => acc + g.clicks, 0);
+
+        Plotly.newPlot('chart-geo', [
+            { x: geos.map(g=>g.key), y: geos.map(g=>g[geoM1]), name: METRIC_META[geoM1].label, type: 'bar', marker: {color: '#3B82F6'} },
+            { x: geos.map(g=>g.key), y: geos.map(g=>g[geoM2]), name: METRIC_META[geoM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#10B981', width: 3} }
+        ], getCleanLayout(METRIC_META[geoM1].label, METRIC_META[geoM2].label, 110, -30), {responsive: true});
+
+        const cardsContainer = document.getElementById('province-cards-grid');
+        if (geos.length === 0) {
+            cardsContainer.innerHTML = '<div class="text-white text-sm col-span-4" style="text-align: left;">No provincial records found for this date/division filter.</div>';
+        } else {
+            cardsContainer.innerHTML = geos.map(g => {
+                const convShare = totalGeoConv > 0 ? (g.conversions / totalGeoConv * 100) : (totalGeoClicks > 0 ? (g.clicks / totalGeoClicks * 100) : 0);
+                return `
+                <div class="prov-card flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start gap-2 mb-2">
+                            <h4 class="text-sm font-extrabold text-white">${g.key}</h4>
                         </div>
-                        <div>
-                            <div class="text-[10px] uppercase text-white opacity-80">Conversions</div>
-                            <div class="font-extrabold text-white">${METRIC_META.conversions.fmt(g.conversions)}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] uppercase text-white opacity-80">Clicks / CTR</div>
-                            <div class="font-extrabold text-white">${METRIC_META.clicks.fmt(g.clicks)} (${METRIC_META.ctr.fmt(g.ctr)})</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] uppercase text-white opacity-80">CPA / CPC</div>
-                            <div class="font-extrabold text-white">${METRIC_META.cpa.fmt(g.cpa)} | ${METRIC_META.cpc.fmt(g.cpc)}</div>
+                        <div class="grid grid-cols-2 gap-2 text-xs my-2">
+                            <div>
+                                <div class="text-[10px] uppercase text-white opacity-80">Spend</div>
+                                <div class="font-extrabold text-white">${METRIC_META.cost.fmt(g.cost)}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] uppercase text-white opacity-80">Conversions</div>
+                                <div class="font-extrabold text-white">${METRIC_META.conversions.fmt(g.conversions)}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] uppercase text-white opacity-80">Clicks / CTR</div>
+                                <div class="font-extrabold text-white">${METRIC_META.clicks.fmt(g.clicks)} (${METRIC_META.ctr.fmt(g.ctr)})</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] uppercase text-white opacity-80">CPA / CPC</div>
+                                <div class="font-extrabold text-white">${METRIC_META.cpa.fmt(g.cpa)} | ${METRIC_META.cpc.fmt(g.cpc)}</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="mt-2 pt-2 border-t border-slate-700/80">
-                    <div class="flex justify-between text-[11px] font-bold text-white mb-1">
-                        <span>Conversion Contribution:</span>
-                        <span>${convShare.toFixed(1)}% of Total</span>
+                    <div class="mt-2 pt-2 border-t border-slate-700/80">
+                        <div class="flex justify-between text-[11px] font-bold text-white mb-1">
+                            <span>Conversion Contribution:</span>
+                            <span>${convShare.toFixed(1)}% of Total</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-blue-500 h-full" style="width:${Math.min(100, Math.max(2, convShare))}%"></div>
+                        </div>
                     </div>
-                    <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                        <div class="bg-blue-500 h-full" style="width:${Math.min(100, Math.max(2, convShare))}%"></div>
-                    </div>
-                </div>
-            </div>`;
-        }).join('');
+                </div>`;
+            }).join('');
+        }
+
+        currentGeoRows = geos.map(g => {
+            const convShare = totalGeoConv > 0 ? (g.conversions / totalGeoConv * 100) : 0;
+            const spendShare = totalGeoSpend > 0 ? (g.cost / totalGeoSpend * 100) : 0;
+            return { ...g, convShare, spendShare };
+        });
+        renderSortableGeoTable();
+
+        // Demo Tab
+        const ageM1 = document.getElementById('age-m1').value;
+        const ageM2 = document.getElementById('age-m2').value;
+        document.getElementById('age-chart-heading').innerText = `Age Bracket: ${METRIC_META[ageM1].label} vs. ${METRIC_META[ageM2].label}`;
+
+        const ages = groupAndAggregate(RAW_CSVS.demo, r => r.value, r => flt(r) && String(r.demographic_type).toLowerCase() === 'age').sort((a,b) => a.key.localeCompare(b.key));
+        Plotly.newPlot('chart-age', [
+            { x: ages.map(a=>a.key), y: ages.map(a=>a[ageM1]), name: METRIC_META[ageM1].label, type: 'bar', marker: {color: '#6366F1'} },
+            { x: ages.map(a=>a.key), y: ages.map(a=>a[ageM2]), name: METRIC_META[ageM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#10B981', width: 3} }
+        ], getCleanLayout(METRIC_META[ageM1].label, METRIC_META[ageM2].label, 55, 0), {responsive: true});
+
+        buildAlignedTable('table-age',
+            ['Age Bracket', 'Impressions', 'Clicks', 'CTR %', 'Spend ($)', 'Avg CPC', 'Conversions', 'CPA'],
+            ages.map(a => [a.key, METRIC_META.impressions.fmt(a.impressions), METRIC_META.clicks.fmt(a.clicks), METRIC_META.ctr.fmt(a.ctr), METRIC_META.cost.fmt(a.cost), METRIC_META.cpc.fmt(a.cpc), METRIC_META.conversions.fmt(a.conversions), METRIC_META.cpa.fmt(a.cpa)])
+        );
+
+        const genM1 = document.getElementById('gender-m1').value;
+        const genM2 = document.getElementById('gender-m2').value;
+        document.getElementById('gender-chart-heading').innerText = `Gender: ${METRIC_META[genM1].label} vs. ${METRIC_META[genM2].label}`;
+
+        const gens = groupAndAggregate(RAW_CSVS.demo, r => r.value, r => flt(r) && String(r.demographic_type).toLowerCase() === 'gender').sort((a,b) => b.clicks - a.clicks);
+        Plotly.newPlot('chart-gender', [
+            { x: gens.map(g=>g.key), y: gens.map(g=>g[genM1]), name: METRIC_META[genM1].label, type: 'bar', marker: {color: '#3B82F6'} },
+            { x: gens.map(g=>g.key), y: gens.map(g=>g[genM2]), name: METRIC_META[genM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#F59E0B', width: 3} }
+        ], getCleanLayout(METRIC_META[genM1].label, METRIC_META[genM2].label, 55, 0), {responsive: true});
+
+        buildAlignedTable('table-gender',
+            ['Gender Segment', 'Impressions', 'Clicks', 'CTR %', 'Spend ($)', 'Avg CPC', 'Conversions', 'CPA'],
+            gens.map(g => [g.key, METRIC_META.impressions.fmt(g.impressions), METRIC_META.clicks.fmt(g.clicks), METRIC_META.ctr.fmt(g.ctr), METRIC_META.cost.fmt(g.cost), METRIC_META.cpc.fmt(g.cpc), METRIC_META.conversions.fmt(g.conversions), METRIC_META.cpa.fmt(g.cpa)])
+        );
+
+        // Device Tab
+        const devM1 = document.getElementById('dev-m1').value;
+        const devM2 = document.getElementById('dev-m2').value;
+        document.getElementById('dev-chart-heading').innerText = `Device Breakdown: ${METRIC_META[devM1].label} vs. ${METRIC_META[devM2].label}`;
+
+        const devs = groupAndAggregate(RAW_CSVS.device, r => r.device_type, flt).sort((a,b) => b.clicks - a.clicks);
+        Plotly.newPlot('chart-device', [
+            { x: devs.map(d=>d.key), y: devs.map(d=>d[devM1]), name: METRIC_META[devM1].label, type: 'bar', marker: {color: '#14B8A6'} },
+            { x: devs.map(d=>d.key), y: devs.map(d=>d[devM2]), name: METRIC_META[devM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#EC4899', width: 3} }
+        ], getCleanLayout(METRIC_META[devM1].label, METRIC_META[devM2].label, 55, 0), {responsive: true});
+
+        buildAlignedTable('table-device',
+            ['Device Category', 'Impressions', 'Clicks', 'CTR %', 'Spend ($)', 'Avg CPC', 'Conversions', 'CPA'],
+            devs.map(d => [d.key, METRIC_META.impressions.fmt(d.impressions), METRIC_META.clicks.fmt(d.clicks), METRIC_META.ctr.fmt(d.ctr), METRIC_META.cost.fmt(d.cost), METRIC_META.cpc.fmt(d.cpc), METRIC_META.conversions.fmt(d.conversions), METRIC_META.cpa.fmt(d.cpa)])
+        );
     }
 
-    currentGeoRows = geos.map(g => {
-        const convShare = totalGeoConv > 0 ? (g.conversions / totalGeoConv * 100) : 0;
-        const spendShare = totalGeoSpend > 0 ? (g.cost / totalGeoSpend * 100) : 0;
-        return { ...g, convShare, spendShare };
-    });
-    renderSortableGeoTable();
+    function initFiltersAndRender() {
+        const divs = new Set(['All']);
+        const dates = [];
+        RAW_CSVS.campaign.forEach(r => {
+            if (r.division) divs.add(r.division);
+            if (r.date) dates.push(String(r.date).slice(0, 10));
+        });
+        const selectEl = document.getElementById('division-select');
+        selectEl.innerHTML = '';
+        Array.from(divs).sort().forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d; opt.innerText = d === 'All' ? 'All Divisions' : d;
+            selectEl.appendChild(opt);
+        });
 
-    // Demo Tab Charts (Aligned Tables with Explicit Style Overrides)
-    const ageM1 = document.getElementById('age-m1').value;
-    const ageM2 = document.getElementById('age-m2').value;
-    document.getElementById('age-chart-heading').innerText = `Age Bracket: ${METRIC_META[ageM1].label} vs. ${METRIC_META[ageM2].label}`;
+        document.querySelectorAll('.metric-select').forEach(sel => {
+            const def = sel.getAttribute('data-default');
+            sel.innerHTML = '';
+            Object.entries(METRIC_META).forEach(([k, meta]) => {
+                const opt = document.createElement('option');
+                opt.value = k; opt.innerText = meta.label;
+                if (k === def) opt.selected = true;
+                sel.appendChild(opt);
+            });
+            sel.addEventListener('change', refreshUI);
+        });
 
-    const ages = groupAndAggregate(RAW_CSVS.demo, r => r.value, r => flt(r) && String(r.demographic_type).toLowerCase() === 'age').sort((a,b) => a.key.localeCompare(b.key));
-    Plotly.newPlot('chart-age', [
-        { x: ages.map(a=>a.key), y: ages.map(a=>a[ageM1]), name: METRIC_META[ageM1].label, type: 'bar', marker: {color: '#6366F1'} },
-        { x: ages.map(a=>a.key), y: ages.map(a=>a[ageM2]), name: METRIC_META[ageM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#10B981', width: 3} }
-    ], getCleanLayout(METRIC_META[ageM1].label, METRIC_META[ageM2].label, 55, 0), {responsive: true});
-
-    buildAlignedTable('table-age',
-        ['Age Bracket', 'Impressions', 'Clicks', 'CTR %', 'Spend ($)', 'Avg CPC', 'Conversions', 'CPA'],
-        ages.map(a => [a.key, METRIC_META.impressions.fmt(a.impressions), METRIC_META.clicks.fmt(a.clicks), METRIC_META.ctr.fmt(a.ctr), METRIC_META.cost.fmt(a.cost), METRIC_META.cpc.fmt(a.cpc), METRIC_META.conversions.fmt(a.conversions), METRIC_META.cpa.fmt(a.cpa)])
-    );
-
-    const genM1 = document.getElementById('gender-m1').value;
-    const genM2 = document.getElementById('gender-m2').value;
-    document.getElementById('gender-chart-heading').innerText = `Gender: ${METRIC_META[genM1].label} vs. ${METRIC_META[genM2].label}`;
-
-    const gens = groupAndAggregate(RAW_CSVS.demo, r => r.value, r => flt(r) && String(r.demographic_type).toLowerCase() === 'gender').sort((a,b) => b.clicks - a.clicks);
-    Plotly.newPlot('chart-gender', [
-        { x: gens.map(g=>g.key), y: gens.map(g=>g[genM1]), name: METRIC_META[genM1].label, type: 'bar', marker: {color: '#3B82F6'} },
-        { x: gens.map(g=>g.key), y: gens.map(g=>g[genM2]), name: METRIC_META[genM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#F59E0B', width: 3} }
-    ], getCleanLayout(METRIC_META[genM1].label, METRIC_META[genM2].label, 55, 0), {responsive: true});
-
-    buildAlignedTable('table-gender',
-        ['Gender Segment', 'Impressions', 'Clicks', 'CTR %', 'Spend ($)', 'Avg CPC', 'Conversions', 'CPA'],
-        gens.map(g => [g.key, METRIC_META.impressions.fmt(g.impressions), METRIC_META.clicks.fmt(g.clicks), METRIC_META.ctr.fmt(g.ctr), METRIC_META.cost.fmt(g.cost), METRIC_META.cpc.fmt(g.cpc), METRIC_META.conversions.fmt(g.conversions), METRIC_META.cpa.fmt(g.cpa)])
-    );
-
-    // Device Tab (Aligned Tables)
-    const devM1 = document.getElementById('dev-m1').value;
-    const devM2 = document.getElementById('dev-m2').value;
-    document.getElementById('dev-chart-heading').innerText = `Device Breakdown: ${METRIC_META[devM1].label} vs. ${METRIC_META[devM2].label}`;
-
-    const devs = groupAndAggregate(RAW_CSVS.device, r => r.device_type, flt).sort((a,b) => b.clicks - a.clicks);
-    Plotly.newPlot('chart-device', [
-        { x: devs.map(d=>d.key), y: devs.map(d=>d[devM1]), name: METRIC_META[devM1].label, type: 'bar', marker: {color: '#14B8A6'} },
-        { x: devs.map(d=>d.key), y: devs.map(d=>d[devM2]), name: METRIC_META[devM2].label, yaxis: 'y2', type: 'scatter', mode: 'lines+markers', line: {color: '#EC4899', width: 3} }
-    ], getCleanLayout(METRIC_META[devM1].label, METRIC_META[devM2].label, 55, 0), {responsive: true});
-
-    buildAlignedTable('table-device',
-        ['Device Category', 'Impressions', 'Clicks', 'CTR %', 'Spend ($)', 'Avg CPC', 'Conversions', 'CPA'],
-        devs.map(d => [d.key, METRIC_META.impressions.fmt(d.impressions), METRIC_META.clicks.fmt(d.clicks), METRIC_META.ctr.fmt(d.ctr), METRIC_META.cost.fmt(d.cost), METRIC_META.cpc.fmt(d.cpc), METRIC_META.conversions.fmt(d.conversions), METRIC_META.cpa.fmt(d.cpa)])
-    );
-}
-
-function initFiltersAndRender() {
-    const divs = new Set(['All']);
-    const dates = [];
-    RAW_CSVS.campaign.forEach(r => {
-        if (r.division) divs.add(r.division);
-        if (r.date) dates.push(String(r.date).slice(0, 10));
-    });
-    const selectEl = document.getElementById('division-select');
-    selectEl.innerHTML = '';
-    Array.from(divs).sort().forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d; opt.innerText = d === 'All' ? 'All Divisions' : d;
-        selectEl.appendChild(opt);
-    });
-
-    if (dates.length > 0) {
-        dates.sort();
-        const minD = dates[0];
-        const maxD = dates[dates.length - 1];
-        const sEl = document.getElementById('start-date');
-        const eEl = document.getElementById('end-date');
-        sEl.min = minD; sEl.max = maxD; sEl.value = minD;
-        eEl.min = minD; eEl.max = maxD; eEl.value = maxD;
+        if (dates.length > 0) {
+            dates.sort();
+            const minD = dates[0];
+            const maxD = dates[dates.length - 1];
+            const sEl = document.getElementById('start-date');
+            const eEl = document.getElementById('end-date');
+            sEl.min = minD; sEl.max = maxD; sEl.value = minD;
+            eEl.min = minD; eEl.max = maxD; eEl.value = maxD;
+        }
+        refreshUI();
     }
-    refreshUI();
-}
 
-document.getElementById('division-select').addEventListener('change', refreshUI);
-document.getElementById('start-date').addEventListener('change', refreshUI);
-document.getElementById('end-date').addEventListener('change', refreshUI);
+    document.getElementById('division-select').addEventListener('change', refreshUI);
+    document.getElementById('start-date').addEventListener('change', refreshUI);
+    document.getElementById('end-date').addEventListener('change', refreshUI);
 
-initFiltersAndRender();
-</script>
+    initFiltersAndRender();
+    </script>
 </body>
 </html>
